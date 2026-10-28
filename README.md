@@ -1,32 +1,38 @@
 # vamsi-calendar
 
-A short, permanent link to my interview availability calendar.
+My interview availability, as a single page anyone can open.
 
 **https://vamsi05220323.github.io/vamsi-calendar**
 
-## Why this exists
-
-The calendar itself lives at a long, auto-generated URL that isn't practical to put
-on a resume or type out in an email. This repo serves a one-page redirect so I can
-hand out a readable link instead.
-
-The more useful reason is indirection: if the calendar ever moves, I update
-`index.html` here rather than chasing down every application and resume that
-already went out. The public link stays the same.
+Monday to Friday, 8am to 7pm Central, in one-hour slots. A recruiter sees the whole
+week at once instead of clicking through one day at a time, and the times are shown
+in their own time zone rather than mine.
 
 ## How it works
 
-`index.html` redirects three ways, so it works regardless of how strict the
-visitor's browser is:
+One static file, no build step, no dependencies. `index.html` holds both the data and
+the page that renders it.
 
-- `<meta http-equiv="refresh">` — fires without JavaScript
-- `location.replace()` — faster, and keeps the Back button sane
-- a visible link — the fallback if both are blocked
+- **Time zones.** Hours are stored in Central. The dropdown relabels them for Eastern,
+  Mountain or Pacific, and the page preselects the visitor's own zone by comparing
+  their UTC offset against Central's — not by matching city names, so it stays correct
+  through daylight saving changes and in places like Arizona that don't observe them.
+- **Weeks.** Opens on the current week; the arrows reach four weeks ahead.
+- **Read-only.** The cells are plain elements, not buttons. Nothing here to click.
 
-The page is styled so that the brief moment before the redirect doesn't look broken.
+## Changing my availability
 
-## Updating the destination
+Edit the `BUSY` block at the top of the `<script>` in `index.html`. Nothing else in
+the file needs to change.
 
-Change the URL in all four places in `index.html` (the `canonical` link, the
-`refresh` meta, the anchor `href`, and the `location.replace` call), then commit
-and push. GitHub Pages redeploys on its own within a minute or so.
+```js
+var BUSY = {
+  "2026-10-26": {            // the Monday of the week
+    "2026-10-27": [9, 14]    // block 9–10am and 2–3pm Central on that Tuesday
+  }
+};
+```
+
+Hours are 24-hour Central time, and each number is the hour the slot *starts*. A day
+that isn't listed is open all day, and so is a week that isn't listed. Commit and push;
+GitHub Pages redeploys within a minute.

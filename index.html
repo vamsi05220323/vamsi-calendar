@@ -2,53 +2,520 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Vamsi's Availability</title>
-<link rel="canonical" href="https://claude.ai/artifact/7fRa6KjmdM5Kk162k3kD44">
-<meta http-equiv="refresh" content="0; url=https://claude.ai/artifact/7fRa6KjmdM5Kk162k3kD44">
+<meta name="description" content="Interview availability, Monday to Friday, shown in your own time zone.">
+<meta property="og:title" content="Vamsi's Availability">
+<meta property="og:description" content="Interview availability, Monday to Friday, shown in your own time zone.">
+<meta property="og:type" content="website">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Public+Sans:wght@400;500;600;700&display=swap">
 <style>
+  /* Layout: one sheet — masthead, week nav, then a 6-column grid (time rail + 5 weekdays). */
   :root {
     --bg: #f6f6f4;
+    --sheet: #ffffff;
     --ink: #1c1d1a;
     --ink-soft: #66685f;
+    --rule: #e2e2dc;
+    --free-bg: #e4ece0;
+    --free-ink: #2f5d3a;
+    --free-edge: #c3d6bd;
+    --busy-bg: #f1f1ee;
+    --busy-ink: #9a9c93;
     --accent: #2f5d3a;
+    --on-accent: #fbfbf7;
+    --focus: #8a6b2f;
+    --font-display: "Newsreader", Georgia, "Times New Roman", serif;
+    --font-ui: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color-scheme: light;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   @media (prefers-color-scheme: dark) {
-    :root { --bg: #16170f; --ink: #eceade; --ink-soft: #9a9c8e; --accent: #a9cfae; }
+    :root {
+      --bg: #16170f;
+      --sheet: #1e1f19;
+      --ink: #eceade;
+      --ink-soft: #9a9c8e;
+      --rule: #32342a;
+      --free-bg: #26382a;
+      --free-ink: #bedcc0;
+      --free-edge: #3c5540;
+      --busy-bg: #23241d;
+      --busy-ink: #6d6f63;
+      --accent: #a9cfae;
+      --on-accent: #16170f;
+      --focus: #d8b668;
+      color-scheme: dark;
+    }
   }
+
+  * { box-sizing: border-box; }
   html, body { height: 100%; }
   body {
     margin: 0;
-    display: grid;
-    place-items: center;
-    padding: 24px;
     background: var(--bg);
     color: var(--ink);
-    font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    text-align: center;
+    font-family: var(--font-ui);
+    font-size: 15px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
   }
-  h1 { font-size: 22px; font-weight: 600; margin: 0 0 8px; }
-  p { margin: 0; color: var(--ink-soft); font-size: 14px; }
-  a {
-    display: inline-block;
-    margin-top: 16px;
-    color: var(--accent);
+
+  .page {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 20px 24px;
+    max-width: 1060px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .masthead h1 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: clamp(26px, 4.4vw, 34px);
+    line-height: 1.05;
+    margin: 0;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  .masthead .zone {
+    margin: 7px 0 0;
+    color: var(--ink-soft);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+  }
+  .zone select {
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .03em;
+    color: var(--ink);
+    background: var(--sheet);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: 4px 8px;
+    cursor: pointer;
+  }
+  .zone select:hover { border-color: var(--accent); }
+  .zone select:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+
+  .weekbar {
+    display: flex;
+    align-items: center;
+    gap: 10px 18px;
+    flex-wrap: wrap;
+  }
+  .weekbar .range {
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    margin-left: auto;
+  }
+
+  /* Current week is a selection and shows as pressed; the arrows are movements, so they never do. */
+  .weekpick {
+    display: inline-flex;
+    align-items: center;
+    background: var(--sheet);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .weekpick button {
+    font: inherit;
+    font-size: 13px;
     font-weight: 600;
-    text-decoration: none;
-    border-bottom: 1px solid currentColor;
+    color: var(--ink-soft);
+    background: none;
+    border: 0;
+    border-radius: 999px;
+    padding: 6px 14px;
+    cursor: pointer;
+  }
+  .weekpick button[aria-pressed="true"] {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+  .weekpick .arrow {
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--rule);
+    padding: 6px 13px;
+  }
+  .weekpick .arrow:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .weekpick button:disabled { opacity: .3; cursor: not-allowed; }
+  .weekpick button:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+
+  .sheet {
+    background: var(--sheet);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    padding: 12px;
+    overflow-x: auto;
+    min-width: 0;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 70px repeat(5, minmax(78px, 1fr));
+    gap: 4px;
+    min-width: 464px;
+  }
+  .dayhead {
+    text-align: center;
+    padding: 2px 0 6px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 2px;
+  }
+  .dayhead .dow {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .dayhead .num {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 19px;
+    font-variant-numeric: tabular-nums;
+  }
+  .dayhead.is-today .num { color: var(--accent); font-weight: 600; }
+  .corner { border-bottom: 1px solid var(--rule); margin-bottom: 2px; }
+
+  .timelabel {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 6px;
+    height: 34px;
+  }
+
+  /* Read-only: these are marks on a schedule, not controls, so nothing here
+     invites a click. */
+  .cell {
+    height: 34px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cell[data-state="free"] {
+    background: var(--free-bg);
+    color: var(--free-ink);
+    border-color: var(--free-edge);
+  }
+  .cell[data-state="busy"] {
+    background: var(--busy-bg);
+    color: var(--busy-ink);
+  }
+  .cell .mark { opacity: .85; }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+  }
+  .legend .key { display: inline-flex; align-items: center; gap: 7px; }
+  .swatch {
+    width: 14px; height: 14px; border-radius: 4px;
+    border: 1px solid var(--rule);
+    display: inline-block;
+  }
+  .swatch.free { background: var(--free-bg); border-color: var(--free-edge); }
+  .swatch.busy { background: var(--busy-bg); }
+
+  .footbar {
+    display: flex;
+    justify-content: flex-end;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
   }
 </style>
 </head>
 <body>
-  <main>
+
+<div class="page">
+  <header class="masthead">
     <h1>Vamsi's Availability</h1>
-    <p>Opening the interview calendar&hellip;</p>
-    <a href="https://claude.ai/artifact/7fRa6KjmdM5Kk162k3kD44">Continue to the calendar</a>
-  </main>
-  <script>
-    // Replaces this entry rather than pushing one, so Back returns to wherever
-    // the visitor came from instead of bouncing them through the redirect again.
-    location.replace("https://claude.ai/artifact/7fRa6KjmdM5Kk162k3kD44");
-  </script>
+    <p class="zone">
+      <select id="tz" aria-label="Time zone">
+        <option value="1">Eastern Time Zone</option>
+        <option value="0" selected>Central Time Zone</option>
+        <option value="-1">Mountain Time Zone</option>
+        <option value="-2">Pacific Time Zone</option>
+      </select>
+    </p>
+  </header>
+
+  <div class="weekbar">
+    <div class="weekpick" role="group" aria-label="Which week">
+      <button type="button" id="wk-current" aria-pressed="true">Current week</button>
+      <button type="button" class="arrow" id="wk-prev" disabled>← Previous week</button>
+      <button type="button" class="arrow" id="wk-next">Next week →</button>
+    </div>
+    <div class="legend">
+      <span class="key"><span class="swatch free"></span> Available</span>
+      <span class="key"><span class="swatch busy"></span> Busy</span>
+    </div>
+    <div class="range" id="range">—</div>
+  </div>
+
+  <div class="sheet">
+    <div class="grid" id="grid" role="grid" aria-label="Weekly availability"></div>
+  </div>
+
+  <div class="footbar"><span id="count"></span></div>
+</div>
+
+<script>
+(function () {
+  /* ------------------------------------------------------------------
+     THE HOURS I'M NOT AVAILABLE.
+
+     Keyed by the Monday of each week, then by day, listing the hours to
+     block in 24-hour CENTRAL time. 9 means the 9–10am slot. A day that
+     isn't listed is open all day; so is any week that isn't listed.
+
+     Everything below this block is display logic — to change availability,
+     edit only this.
+     ------------------------------------------------------------------ */
+  var BUSY = {
+    "2026-10-26": {
+      "2026-10-26": [9, 10, 11, 12, 13],
+      "2026-10-27": [9, 10, 11, 12, 13, 14, 15, 16],
+      "2026-10-28": [9, 10, 11, 12],
+      "2026-10-29": [9, 10, 11, 12],
+      "2026-10-30": [15, 16]
+    },
+    "2026-11-02": {
+      "2026-11-02": [9],
+      "2026-11-03": [9],
+      "2026-11-04": [9]
+    }
+  };
+
+  var HOURS = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];   // Central, 8am–7pm
+  var DOW = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+  var MAX_WEEKS_AHEAD = 4;
+  var ZONE_SHIFTS = [1, 0, -1, -2];
+
+  // Hours are stored in Central; `shift` only changes how they are labelled. US zones
+  // move to and from DST together, so a fixed hour offset from Central is correct
+  // year-round and needs no DST arithmetic.
+  var state = { week: mondayOf(new Date()), offset: 0, shift: 0 };
+
+  /* ---------- dates ---------- */
+
+  function mondayOf(d) {
+    var x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+    return x;
+  }
+  function addDays(d, n) {
+    var x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    x.setDate(x.getDate() + n);
+    return x;
+  }
+  function key(d) {
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") +
+      "-" + String(d.getDate()).padStart(2, "0");
+  }
+  function weekDays() {
+    var out = [];
+    for (var i = 0; i < 5; i++) out.push(addDays(state.week, i));
+    return out;
+  }
+
+  // Each row is a one-hour slot, labelled by the hour it starts and the hour it ends,
+  // so a recruiter reads "10–11a" rather than guessing how long "10a" means.
+  function clock12(h) { return h % 12 === 0 ? 12 : h % 12; }
+  function suffix(h) { return h < 12 ? "a" : "p"; }
+
+  function slotLabel(h) {
+    var start = suffix(h), end = suffix(h + 1);
+    if (start === end) return clock12(h) + "–" + clock12(h + 1) + end;
+    return clock12(h) + start + "–" + clock12(h + 1) + end;
+  }
+  function hourSpoken(h) {
+    return clock12(h) + " " + (h % 24 < 12 ? "AM" : "PM");
+  }
+  function slotSpoken(h) {
+    return hourSpoken(h) + " to " + hourSpoken(h + 1);
+  }
+
+  /* ---------- availability ---------- */
+
+  function isBusy(dayKey, hour) {
+    var wk = BUSY[key(state.week)];
+    var day = wk && wk[dayKey];
+    return !!day && day.indexOf(hour) !== -1;
+  }
+
+  /* ---------- time zone ---------- */
+
+  var ZONE_OF = {
+    "America/New_York": 1, "America/Detroit": 1, "America/Toronto": 1,
+    "America/Chicago": 0, "America/Winnipeg": 0,
+    "America/Denver": -1, "America/Edmonton": -1, "America/Phoenix": -1,
+    "America/Los_Angeles": -2, "America/Vancouver": -2
+  };
+
+  // A zone's current offset from UTC, in whole hours.
+  function utcOffset(tz) {
+    try {
+      var parts = new Intl.DateTimeFormat("en-US", { timeZone: tz, timeZoneName: "shortOffset" })
+        .formatToParts(new Date());
+      var i, named = null;
+      for (i = 0; i < parts.length; i++) if (parts[i].type === "timeZoneName") named = parts[i].value;
+      var m = named && named.match(/GMT([+-]\d{1,2})/);
+      return m ? Number(m[1]) : null;
+    } catch (e) { return null; }
+  }
+
+  // Preselect the viewer's own zone by comparing their offset with Central's. Doing it
+  // by offset rather than by place name keeps it right across DST and in places like
+  // Arizona that sit out the change.
+  function detectZone() {
+    var central = utcOffset("America/Chicago");
+    if (central !== null) {
+      var shift = Math.round(-new Date().getTimezoneOffset() / 60 - central);
+      if (ZONE_SHIFTS.indexOf(shift) !== -1) return shift;
+    }
+    try {
+      var named = ZONE_OF[Intl.DateTimeFormat().resolvedOptions().timeZone];
+      if (typeof named === "number") return named;
+    } catch (e) {}
+    return 0;   // anywhere outside the four zones reads my own hours
+  }
+
+  function setZone(shift) {
+    state.shift = shift;
+    document.getElementById("tz").value = String(shift);
+    render();
+  }
+
+  /* ---------- weeks ---------- */
+
+  // The current week plus the next four. Current week is a selection, so it shows as
+  // pressed; the arrows only move within that span and stop at each end.
+  function setWeek(offset) {
+    state.offset = Math.max(0, Math.min(MAX_WEEKS_AHEAD, offset));
+    state.week = addDays(mondayOf(new Date()), state.offset * 7);
+    document.getElementById("wk-current").setAttribute("aria-pressed", String(state.offset === 0));
+    document.getElementById("wk-prev").disabled = state.offset === 0;
+    document.getElementById("wk-next").disabled = state.offset === MAX_WEEKS_AHEAD;
+    render();
+  }
+
+  /* ---------- rendering ---------- */
+
+  function render() {
+    var grid = document.getElementById("grid");
+    grid.textContent = "";
+    var today = key(new Date());
+    var days = weekDays();
+
+    var corner = document.createElement("div");
+    corner.className = "corner";
+    grid.appendChild(corner);
+
+    days.forEach(function (d, i) {
+      var h = document.createElement("div");
+      h.className = "dayhead" + (key(d) === today ? " is-today" : "");
+      var dow = document.createElement("span");
+      dow.className = "dow";
+      dow.textContent = DOW[i];
+      var num = document.createElement("span");
+      num.className = "num";
+      num.textContent = String(d.getDate());
+      h.appendChild(dow);
+      h.appendChild(num);
+      grid.appendChild(h);
+    });
+
+    var freeCount = 0;
+
+    HOURS.forEach(function (hour) {
+      var label = document.createElement("div");
+      label.className = "timelabel";
+      label.textContent = slotLabel(hour + state.shift);
+      grid.appendChild(label);
+
+      days.forEach(function (d, i) {
+        var k = key(d);
+        var free = !isBusy(k, hour);
+        if (free) freeCount++;
+
+        var cell = document.createElement("div");
+        cell.className = "cell";
+        cell.setAttribute("role", "gridcell");
+        cell.dataset.state = free ? "free" : "busy";
+
+        var mark = document.createElement("span");
+        mark.className = "mark";
+        mark.setAttribute("aria-hidden", "true");
+        mark.textContent = free ? "✓" : "–";
+        cell.appendChild(mark);
+
+        cell.setAttribute("aria-label", DOW[i] + " " + (d.getMonth() + 1) + "/" + d.getDate() +
+          ", " + slotSpoken(hour + state.shift) + " — " + (free ? "free" : "unavailable"));
+
+        grid.appendChild(cell);
+      });
+    });
+
+    var fmt = { month: "short", day: "numeric" };
+    var end = addDays(state.week, 4);
+    document.getElementById("range").textContent =
+      state.week.toLocaleDateString(undefined, fmt) + " – " +
+      end.toLocaleDateString(undefined, fmt) + ", " + end.getFullYear();
+    document.getElementById("count").textContent =
+      freeCount + " of " + (HOURS.length * 5) + " one-hour slots open";
+  }
+
+  /* ---------- boot ---------- */
+
+  document.getElementById("tz").addEventListener("change", function (e) {
+    setZone(Number(e.target.value));
+  });
+  document.getElementById("wk-current").addEventListener("click", function () { setWeek(0); });
+  document.getElementById("wk-prev").addEventListener("click", function () { setWeek(state.offset - 1); });
+  document.getElementById("wk-next").addEventListener("click", function () { setWeek(state.offset + 1); });
+
+  setZone(detectZone());   // every load starts from the viewer's own zone
+  setWeek(0);              // and on the current week
+})();
+</script>
+
 </body>
 </html>
